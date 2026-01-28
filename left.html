@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>式作成ツール</title>
+
+  <!-- 既存共通CSS（そのまま利用） -->
+  <link rel="stylesheet" href="style_common.css" />
+  <!-- 本ツール用CSS -->
+  <link rel="stylesheet" href="left.css" />
+</head>
+<body>
+  <section id="layer-in">
+    <h2>Input Layer</h2>
+
+    <div class="mode-select" role="group" aria-label="モード選択">
+      <label><input type="radio" name="mode" value="1" checked /> 1つ</label>
+      <label><input type="radio" name="mode" value="2" /> 2つ</label>
+      <label><input type="radio" name="mode" value="3" /> 3つ</label>
+    </div>
+
+    <div id="mode3-options" class="sub-mode-toggle" style="display:none;">
+      <label><input type="radio" name="mode3type" value="A" checked /> A: 直列 (A,n,B,n,C)</label><br />
+      <label><input type="radio" name="mode3type" value="B" /> B: 集合 ({A,B,C},n)</label>
+    </div>
+
+    <div id="input-container" class="input-group"></div>
+
+    <button id="btn-generate" class="btn-gen" type="button">生成 (↓)</button>
+  </section>
+
+  <section id="layer-mix">
+    <div class="mix-header">
+      <h2>Mix Layer</h2>
+      <div class="mix-toolbar">
+        <button id="btn-edit-selected" type="button" class="btn-sm" title="選択中の1件をInputへ展開">Edit selected</button>
+        <button id="btn-clear-mix" type="button" class="btn-sm" title="Mixを全削除">Clear</button>
+      </div>
+    </div>
+
+    <div class="mix-help">選択した式を「*」で連結します（ドラッグで並び替え可）</div>
+
+    <ul id="mix-list" class="mix-list"></ul>
+  </section>
+
+  <section id="layer-out">
+    <h2>Output Layer</h2>
+
+    <div class="output-controls">
+      <button id="btn-create-final" type="button" style="flex:1;">Mixから式作成 (↓)</button>
+      <button id="btn-decompose-mix" class="btn-reverse" type="button" title="式からMixへ分解">逆変換 (↑)</button>
+    </div>
+
+    <textarea id="final-output" placeholder="最終的な式... またはここに入力して逆変換"></textarea>
+
+    <div class="output-footer">
+      <button id="btn-copy" class="btn-copy" type="button">Copy</button>
+    </div>
+  </section>
+
+  <!-- Toast -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script defer src="left.js"></script>
+</body>
+</html>

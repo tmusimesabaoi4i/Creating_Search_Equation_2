@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style_common.css">
+    <style>
+        body { padding: 10px; height: 100vh; display: flex; flex-direction: column; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        #notepad {
+            flex-grow: 1;
+            width: 100%;
+            resize: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            outline: none;
+            line-height: 1.6;
+            background: #fff;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        #notepad:focus { border-color: #4a90e2; }
+        .status { font-size: 10px; color: #999; }
+    </style>
+</head>
+<body>
+    <header>
+        <span>Memo</span>
+        <span id="saveStatus" class="status">Saved</span>
+    </header>
+    <textarea id="notepad" placeholder="ここにメモを入力..."></textarea>
+
+    <script>
+        const notepad = document.getElementById('notepad');
+        const status = document.getElementById('saveStatus');
+
+        // ロード時に復元
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('biz_tool_memo');
+            if (saved) notepad.value = saved;
+        });
+
+        // 入力時に保存
+        notepad.addEventListener('input', () => {
+            localStorage.setItem('biz_tool_memo', notepad.value);
+            status.textContent = 'Saving...';
+            setTimeout(() => { status.textContent = 'Saved'; }, 500);
+        });
+    </script>
+</body>
+</html>

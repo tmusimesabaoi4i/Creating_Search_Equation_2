@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Business Tool Main</title>
+    <style>
+        body, html { height: 100%; margin: 0; overflow: hidden; }
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+        .frame-wrapper {
+            height: 100%;
+            border-right: 1px solid #ddd;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        
+        /* Layout Sizing */
+        #wrapper-left { width: 30%; min-width: 320px; background: #fff; }
+        #wrapper-center { width: 40%; flex-grow: 1; }
+        #wrapper-right { width: 30%; min-width: 320px; background: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="wrapper-left" class="frame-wrapper">
+            <iframe src="left.html" name="leftFrame"></iframe>
+        </div>
+
+        <div id="wrapper-center" class="frame-wrapper">
+            <iframe src="center.html" name="centerFrame"></iframe>
+        </div>
+
+        <div id="wrapper-right" class="frame-wrapper">
+            <iframe src="right.html" name="rightFrame"></iframe>
+        </div>
+    </div>
+</body>
+</html>
