@@ -40,6 +40,7 @@
   // DOM
   // -------------------------
   const inputContainer = document.getElementById('input-container');
+  const layerIn = document.getElementById('layer-in');
   const modeRadios = Array.from(document.getElementsByName('mode'));
   const mode3Options = document.getElementById('mode3-options');
   const mode3Radios = Array.from(document.getElementsByName('mode3type'));
@@ -178,6 +179,16 @@
     const joined = deduped.join('+');
 
     return `(${joined})`;
+  }
+
+  /**
+   * class（FT/CP）モード用の軽い正規化
+   * - 前後空白除去
+   * - 全角英数/記号は半角へ（入力ゆれ吸収）
+   * - '+'分割や並べ替えはしない（入力順を維持）
+   */
+  function normalizeWordForClass(rawWord) {
+    return toHalfWidth(String(rawWord ?? '')).trim();
   }
 
   // -------------------------
@@ -329,6 +340,7 @@
     if (!inputContainer) return;
     inputContainer.innerHTML = '';
     if (mode3Options) mode3Options.style.display = (state.mode === '3') ? 'block' : 'none';
+    if (layerIn) layerIn.classList.toggle('mode3-active', state.mode === '3');
 
     const createWordInput = (placeholder) =>
       `<input type="text" class="inp-word" placeholder="${placeholder}" />`;
@@ -336,33 +348,73 @@
     const createNumInput = (placeholder = 'n', value = '1') =>
       `<input type="number" class="inp-num" placeholder="${placeholder}" value="${value}" min="0" />`;
 
+    const DEFAULT_N = {
+      mode2: '30',
+      mode3A: '30',
+      mode3B: '30',
+      mode3C: '5',
+    };
+
     let html = '';
 
     if (state.mode === '1') {
       html += `<div class="input-row">${createWordInput('単語1')}</div>`;
+    } else if (state.mode === 'class') {
+      html += `<div class="input-row">${createWordInput('分類コード（例: H04W12/08+H04W72/12）')}</div>`;
     } else if (state.mode === '2') {
       html += `<div class="input-row">${createWordInput('単語1')}</div>`;
-      html += `<div class="input-row">n: ${createNumInput('n', '1')}</div>`;
+      html += `<div class="input-row">n: ${createNumInput('n', DEFAULT_N.mode2)}</div>`;
       html += `<div class="input-row">${createWordInput('単語2')}</div>`;
     } else if (state.mode === '3') {
       if (state.mode3Type === 'A') {
-        html += `<div class="input-row">直列 {</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">${createWordInput('単語A')}</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">n: ${createNumInput('n', '1')}</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">${createWordInput('単語B')}</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">${createWordInput('単語C')}</div>`;
-        html += `<div class="input-row">}/TX</div>`;
+        // 直列: {A, n, B, n, C}/TX
+        html += `
+          <div class="mode3-card">
+            <div class="mode3-bracket mode3-bracket--open">{</div>
+            <div class="mode3-body">
+              <div class="input-row"><label class="mode3-label">A</label>${createWordInput('単語A')}</div>
+              <div class="input-row"><label class="mode3-label">n</label>${createNumInput('n', DEFAULT_N.mode3A)}</div>
+              <div class="input-row"><label class="mode3-label">B</label>${createWordInput('単語B')}</div>
+              <div class="input-row"><label class="mode3-label">C</label>${createWordInput('単語C')}</div>
+            </div>
+            <div class="mode3-bracket mode3-bracket--close">}/TX</div>
+          </div>`;
       } else if (state.mode3Type === 'B') {
-        html += `<div class="input-row">集合 {</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">${createWordInput('単語A')}</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">${createWordInput('単語B')}</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">${createWordInput('単語C')}</div>`;
-        html += `<div class="input-row">}, n: ${createNumInput('n', '1')} /TX</div>`;
+        // 集合: {A, B, C}, n/TX
+        html += `
+          <div class="mode3-card mode3-card--collection">
+            <div class="mode3-bracket mode3-bracket--open">{</div>
+            <div class="mode3-body">
+              <div class="input-row"><label class="mode3-label">A</label>${createWordInput('単語A')}</div>
+              <div class="input-row"><label class="mode3-label">B</label>${createWordInput('単語B')}</div>
+              <div class="input-row"><label class="mode3-label">C</label>${createWordInput('単語C')}</div>
+            </div>
+            <div class="mode3-bracket mode3-bracket--close">}</div>
+            <div class="mode3-suffix"><label class="mode3-label">n</label>${createNumInput('n', DEFAULT_N.mode3B)}<span class="mode3-tx">/TX</span></div>
+          </div>`;
       } else {
-        html += `<div class="input-row">並列 [</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">左: ${createWordInput('単語A')} /TX</div>`;
-        html += `<div class="input-row" style="padding-left:10px;">右: ${createWordInput('単語B')}, n: ${createNumInput('n', '1')}, ${createWordInput('単語C')} /TX</div>`;
-        html += `<div class="input-row">]</div>`;
+        // 並列: [A/TX + B, n, C/TX]
+        html += `
+          <div class="mode3-card mode3-card--parallel">
+            <div class="mode3-bracket mode3-bracket--open">[</div>
+            <div class="mode3-body">
+              <div class="mode3-parallel-row">
+                <span class="mode3-side-label">左</span>
+                <div class="input-row">${createWordInput('単語A')}<span class="mode3-tx">/TX</span></div>
+              </div>
+              <div class="mode3-parallel-row">
+                <span class="mode3-side-label">右</span>
+                <div class="input-row">
+                  ${createWordInput('単語B')}
+                  <span class="mode3-comma">,</span>
+                  <label class="mode3-label">n</label>${createNumInput('n', DEFAULT_N.mode3C)}
+                  <span class="mode3-comma">,</span>
+                  ${createWordInput('単語C')}<span class="mode3-tx">/TX</span>
+                </div>
+              </div>
+            </div>
+            <div class="mode3-bracket mode3-bracket--close">]</div>
+          </div>`;
       }
     }
 
@@ -378,6 +430,22 @@
 
     const rawWords = wordInputs.map((i) => i.value.trim());
     const nums = numInputs.map((i) => String(i.value ?? '').trim());
+
+    if (state.mode === 'class') {
+      const raw = rawWords[0] ?? '';
+      const x = normalizeWordForClass(raw);
+      if (!x) {
+        showToast('分類コードを入力してください', 'error', 2400);
+        return;
+      }
+
+      const hasPlus = x.includes('+');
+      const alreadyWrapped = x.startsWith('(') && x.endsWith(')');
+      const xw = (hasPlus && !alreadyWrapped) ? `(${x})` : x;
+      const result = `[${xw}/FT+${xw}/CP]`;
+      if (addToMix(result)) showToast('Mixに追加しました', 'success', 1400);
+      return;
+    }
 
     if (rawWords.some((w) => w === '')) {
       showToast('単語を入力してください', 'error', 2400);
@@ -843,6 +911,14 @@
       return str;
     };
 
+    const stripOneParenthesis = (s) => {
+      const str = String(s ?? '').trim();
+      if (str.length >= 2 && str.startsWith('(') && str.endsWith(')')) {
+        return str.slice(1, -1).trim();
+      }
+      return str;
+    };
+
     // "30N" から "30" を取り出す (大文字小文字許容)
     const extractNum = (s) => {
       const m = s.trim().match(/^(\d+)[nN]$/);
@@ -856,19 +932,36 @@
     if (raw.startsWith('[') && raw.endsWith(']')) {
       const inner = raw.slice(1, -1).trim();
       const lr = splitParallelInner(inner);
-      if (!lr) return;
-      const left = lr[0].trim();
-      const right = lr[1].trim();
-      if (!hasTxSuffix(left) || !hasTxSuffix(right)) return;
+      if (lr) {
+        const left = lr[0].trim();
+        const right = lr[1].trim();
+        if (hasTxSuffix(left) && hasTxSuffix(right)) {
+          const wordA = stripParentheses(stripTxSuffix(left));
+          const rightCore = stripTxSuffix(right);
+          const parts = splitTopLevel(rightCore, ',').map((s) => s.trim());
+          
+          if (parts.length === 3 && isNFormat(parts[1])) {
+            setMode('3', 'C');
+            queueMicrotask(() => fillInputs([wordA, stripParentheses(parts[0]), stripParentheses(parts[2])], [extractNum(parts[1])]));
+            return;
+          }
+        }
+      }
 
-      const wordA = stripParentheses(stripTxSuffix(left));
-      const rightCore = stripTxSuffix(right);
-      const parts = splitTopLevel(rightCore, ',').map((s) => s.trim());
-      
-      if (parts.length === 3 && isNFormat(parts[1])) {
-        setMode('3', 'C');
-        queueMicrotask(() => fillInputs([wordA, stripParentheses(parts[0]), stripParentheses(parts[2])], [extractNum(parts[1])]));
-        return;
+      // class（FT/CP）: [Xw/FT + Xw/CP]（Xwは必要に応じて括弧付き）
+      const plusParts = splitTopLevel(inner, '+').map((s) => s.trim());
+      if (plusParts.length === 2) {
+        const l = plusParts[0];
+        const r = plusParts[1];
+        if (/\/ft$/i.test(l) && /\/cp$/i.test(r)) {
+          const baseL = l.replace(/\/ft$/i, '').trim();
+          const baseR = r.replace(/\/cp$/i, '').trim();
+          if (baseL && baseL === baseR) {
+            setMode('class');
+            queueMicrotask(() => fillInputs([stripOneParenthesis(baseL)], []));
+            return;
+          }
+        }
       }
     }
 

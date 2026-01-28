@@ -85,6 +85,18 @@ h2 {
   gap: var(--sp-2);
 }
 
+/* Mode3時のInputレイアウトを整える */
+#layer-in.mode3-active #input-container {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+#layer-in.mode3-active #input-container .mode3-card {
+  width: min(100%, 860px);
+  margin-inline: auto;
+}
+
 .input-row {
   display: flex;
   gap: var(--sp-2);
@@ -114,6 +126,138 @@ h2 {
 
 .input-row input[type="number"]:focus {
   border-color: var(--c-primary);
+}
+
+/* -------------------------
+   Mode3 カード風レイアウト
+   ------------------------- */
+.mode3-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-2);
+  align-items: stretch;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+/* 並列モード（行が2段）のときは縦に伸ばす */
+.mode3-card--parallel {
+  align-items: center;
+}
+
+/* 3-B（集合）用に suffix を横並びに */
+.mode3-card--collection {
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .mode3-card--collection {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .mode3-card--collection .mode3-suffix {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+.mode3-bracket {
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--c-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  user-select: none;
+}
+
+.mode3-bracket--open {
+  padding-right: var(--sp-1);
+}
+
+.mode3-bracket--close {
+  padding-left: var(--sp-1);
+  font-size: 1.2rem;
+}
+
+.mode3-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.mode3-body .input-row {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.mode3-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--c-text-muted);
+  min-width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.mode3-suffix {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-left: var(--sp-2);
+}
+
+.mode3-tx {
+  font-family: monospace;
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+.mode3-comma {
+  color: var(--c-text-muted);
+  font-weight: 600;
+}
+
+/* 並列モード専用 */
+.mode3-parallel-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mode3-side-label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--c-primary);
+  background: var(--c-primary-soft);
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  white-space: nowrap;
+}
+
+.mode3-parallel-row .input-row {
+  flex: 1;
+  display: flex;
+  gap: var(--sp-1);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mode3-parallel-row .input-row input[type="text"] {
+  min-width: 80px;
+  flex: 1;
+}
+
+.mode3-parallel-row .input-row input[type="number"] {
+  width: 60px;
 }
 
 /* -------------------------
@@ -187,9 +331,11 @@ h2 {
 }
 
 .mix-item {
-  display: flex;
+  /* 4列固定: [drag] [checkbox] [text] [actions] */
+  display: grid;
+  grid-template-columns: 24px 22px 1fr 172px;
   align-items: center;
-  gap: var(--sp-2);
+  column-gap: var(--sp-2);
   padding: var(--sp-2);
   border-bottom: 1px solid var(--c-border-light);
   font-family: monospace;
@@ -209,6 +355,8 @@ h2 {
   cursor: grab;
   color: var(--c-text-muted);
   user-select: none;
+  width: 24px;
+  text-align: center;
 }
 
 .drag-handle:active {
@@ -217,12 +365,19 @@ h2 {
 
 .mix-select {
   cursor: pointer;
+  justify-self: center;
+  margin: 0;
+  inline-size: 16px;
+  block-size: 16px;
 }
 
 .mix-text {
-  flex: 1;
+  /* 3列目（可変） */
+  min-width: 0; /* Grid/Flexのはみ出し対策 */
   cursor: pointer;
   color: var(--c-text);
+  display: block;
+  overflow-wrap: anywhere; /* 長い式でも列幅を壊さない */
 }
 
 .mix-text:hover {
@@ -232,6 +387,9 @@ h2 {
 .mix-actions {
   display: flex;
   gap: var(--sp-1);
+  width: 172px;           /* 4列目を固定し、全行で位置を揃える */
+  justify-content: flex-end;
+  align-items: center;
 }
 
 /* -------------------------
