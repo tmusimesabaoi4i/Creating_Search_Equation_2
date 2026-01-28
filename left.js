@@ -13,11 +13,27 @@
   // 状態管理
   // -------------------------
   const STORAGE_KEY = 'biz_tool_mix_items';
+  const VIRTUAL_THRESHOLD = 200; // この件数を超えたら仮想化
+  const OVERSCAN = 5; // 可視範囲外の上下に追加で描画する件数
+  
   const state = {
     mode: '1',
     mode3Type: 'A',
     sortLenDesc: true, // true: 長い→短い, false: 短い→長い
-    mixItems: [] // { id, text, selected }
+    mixItems: [], // { id, text, selected }
+    
+    // 仮想化用
+    virtual: {
+      enabled: false,
+      itemHeight: 0,
+      scrollTop: 0,
+      visibleStart: 0,
+      visibleEnd: 0,
+      scrollEl: null,
+      spacerEl: null,
+      viewportEl: null,
+      ticking: false
+    }
   };
 
   // -------------------------
@@ -431,7 +447,7 @@
     const mkBtn = (label, title, action) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'btn-sm mix-action';
+      b.className = 'btn btn--sm btn--ghost mix-action';
       b.textContent = label;
       b.title = title;
       b.dataset.action = action;
@@ -454,9 +470,10 @@
     if (!mixListEl || mixListEl.dataset.bound === '1') return;
     mixListEl.dataset.bound = '1';
 
-    mixListEl.addEventListener('change', (e) => {
+    // イベント委譲：仮想化時でもbodyで拾う
+    document.body.addEventListener('change', (e) => {
       const chk = e.target.closest('input.mix-select');
-      if (!chk || !mixListEl.contains(chk)) return;
+      if (!chk) return;
       const idx = Number(chk.dataset.index);
       if (!Number.isFinite(idx) || !state.mixItems[idx]) return;
       state.mixItems[idx].selected = chk.checked;
@@ -464,9 +481,9 @@
       updateToggleAllButton();
     });
 
-    mixListEl.addEventListener('click', (e) => {
+    document.body.addEventListener('click', (e) => {
       const btn = e.target.closest('button.mix-action');
-      if (btn && mixListEl.contains(btn)) {
+      if (btn) {
         const idx = Number(btn.dataset.index);
         if (!Number.isFinite(idx) || !state.mixItems[idx]) return;
         const action = btn.dataset.action;
@@ -492,76 +509,260 @@
       }
 
       const span = e.target.closest('span.mix-text');
-      if (span && mixListEl.contains(span)) {
+      if (span) {
         const idx = Number(span.dataset.index);
         if (!Number.isFinite(idx) || !state.mixItems[idx]) return;
         decomposeToInput(state.mixItems[idx].text);
       }
     });
 
-    mixListEl.addEventListener('dragstart', (e) => {
+    document.body.addEventListener('dragstart', (e) => {
       const li = e.target.closest('li.mix-item');
-      if (!li || !mixListEl.contains(li)) return;
+      if (!li) return;
+      
+      // 仮想化時は可視範囲外へのドラッグを防ぐため、ドラッグ元をチェック
       const idx = Number(li.dataset.index);
       if (!Number.isFinite(idx)) return;
+      
+      if (state.virtual.enabled) {
+        // 仮想化時：可視範囲内のみ許可
+        if (idx < state.virtual.visibleStart || idx >= state.virtual.visibleEnd) {
+          e.preventDefault();
+          showToast('可視範囲内でのみドラッグできます', 'info', 1800);
+          return;
+        }
+      }
+      
       draggingIndex = idx;
       li.classList.add('dragging');
       e.dataTransfer?.setData('text/plain', String(idx));
       if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
     });
 
-    mixListEl.addEventListener('dragend', (e) => {
+    document.body.addEventListener('dragend', (e) => {
       const li = e.target.closest('li.mix-item');
       if (li) li.classList.remove('dragging');
       draggingIndex = null;
     });
 
-    mixListEl.addEventListener('dragover', (e) => {
+    document.body.addEventListener('dragover', (e) => {
       const li = e.target.closest('li.mix-item');
-      if (!li || !mixListEl.contains(li)) return;
+      if (!li) return;
+      
+      // 仮想化時は可視範囲内のみ許可
+      if (state.virtual.enabled) {
+        const idx = Number(li.dataset.index);
+        if (!Number.isFinite(idx) || idx < state.virtual.visibleStart || idx >= state.virtual.visibleEnd) {
+          return; // dropを許可しない
+        }
+      }
+      
       e.preventDefault();
       if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
     });
 
-    mixListEl.addEventListener('drop', (e) => {
+    document.body.addEventListener('drop', (e) => {
       const li = e.target.closest('li.mix-item');
-      if (!li || !mixListEl.contains(li)) return;
+      if (!li) return;
+      
       e.preventDefault();
       const to = Number(li.dataset.index);
       const from = draggingIndex ?? Number(e.dataTransfer?.getData('text/plain'));
+      
+      // 仮想化時は可視範囲内のみ許可
+      if (state.virtual.enabled) {
+        if (from < state.virtual.visibleStart || from >= state.virtual.visibleEnd ||
+            to < state.virtual.visibleStart || to >= state.virtual.visibleEnd) {
+          showToast('可視範囲内でのみドラッグできます', 'warn', 1800);
+          return;
+        }
+      }
+      
       if (Number.isFinite(from) && Number.isFinite(to)) moveItem(from, to);
     });
   }
 
-  function renderMix() {
-    if (!mixListEl) return;
-
-    _renderVer += 1;
-    const ver = _renderVer;
-
-    mixListEl.textContent = '';
-    updateMixToolbarButtons();
-
+  // -------------------------
+  // 仮想スクロール：ヘルパー関数
+  // -------------------------
+  
+  function measureItemHeight() {
+    // 1件だけ描画して高さを測定
+    if (state.mixItems.length === 0) return 36; // デフォルト
+    
+    const temp = buildMixItemLi(state.mixItems[0], 0);
+    temp.style.position = 'absolute';
+    temp.style.visibility = 'hidden';
+    mixListEl.appendChild(temp);
+    const height = temp.getBoundingClientRect().height;
+    temp.remove();
+    return height || 36;
+  }
+  
+  function setupVirtualScroll() {
     const total = state.mixItems.length;
-    if (total === 0) return;
-
-    const chunkSize = total > 800 ? 120 : 260;
-    let i = 0;
-
-    const appendChunk = () => {
-      if (ver !== _renderVer) return;
-
+    
+    // しきい値を超えていなければ通常モード
+    if (total <= VIRTUAL_THRESHOLD) {
+      state.virtual.enabled = false;
+      return;
+    }
+    
+    state.virtual.enabled = true;
+    
+    // DOM構造を作成
+    if (!state.virtual.scrollEl) {
+      const section = document.getElementById('layer-mix');
+      const oldList = mixListEl;
+      
+      // スクロールコンテナ
+      const scrollEl = document.createElement('div');
+      scrollEl.id = 'mix-scroll';
+      scrollEl.className = 'mix-scroll';
+      
+      // スペーサー
+      const spacerEl = document.createElement('div');
+      spacerEl.id = 'mix-spacer';
+      spacerEl.className = 'mix-spacer';
+      
+      // ビューポート（既存のul要素を流用）
+      oldList.className = 'mix-list virtualized mix-viewport';
+      oldList.id = 'mix-viewport';
+      
+      spacerEl.appendChild(oldList);
+      scrollEl.appendChild(spacerEl);
+      
+      // 既存のリストを置き換え
+      oldList.parentElement.replaceChild(scrollEl, oldList);
+      
+      state.virtual.scrollEl = scrollEl;
+      state.virtual.spacerEl = spacerEl;
+      state.virtual.viewportEl = oldList;
+      
+      // スクロールイベント
+      scrollEl.addEventListener('scroll', onVirtualScroll);
+      window.addEventListener('resize', onVirtualResize);
+    }
+    
+    // 行高を測定
+    if (!state.virtual.itemHeight) {
+      state.virtual.itemHeight = measureItemHeight();
+    }
+  }
+  
+  function teardownVirtualScroll() {
+    if (!state.virtual.scrollEl) return;
+    
+    const scrollEl = state.virtual.scrollEl;
+    const viewportEl = state.virtual.viewportEl;
+    
+    // イベント解除
+    scrollEl.removeEventListener('scroll', onVirtualScroll);
+    window.removeEventListener('resize', onVirtualResize);
+    
+    // DOM構造を元に戻す
+    viewportEl.className = 'mix-list';
+    viewportEl.id = 'mix-list';
+    viewportEl.style.transform = '';
+    
+    scrollEl.parentElement.replaceChild(viewportEl, scrollEl);
+    
+    state.virtual.scrollEl = null;
+    state.virtual.spacerEl = null;
+    state.virtual.viewportEl = null;
+    state.virtual.enabled = false;
+  }
+  
+  function onVirtualScroll() {
+    if (state.virtual.ticking) return;
+    state.virtual.ticking = true;
+    
+    requestAnimationFrame(() => {
+      state.virtual.ticking = false;
+      renderVirtualRange();
+    });
+  }
+  
+  function onVirtualResize() {
+    if (!state.virtual.enabled) return;
+    renderVirtualRange();
+  }
+  
+  function renderVirtualRange() {
+    if (!state.virtual.enabled || !state.virtual.scrollEl) return;
+    
+    const total = state.mixItems.length;
+    const itemH = state.virtual.itemHeight;
+    const scrollTop = state.virtual.scrollEl.scrollTop;
+    const clientHeight = state.virtual.scrollEl.clientHeight;
+    
+    // 可視範囲の計算
+    const startIndex = Math.max(0, Math.floor(scrollTop / itemH) - OVERSCAN);
+    const visibleCount = Math.ceil(clientHeight / itemH);
+    const endIndex = Math.min(total, startIndex + visibleCount + OVERSCAN * 2);
+    
+    // 変更がなければスキップ
+    if (startIndex === state.virtual.visibleStart && endIndex === state.virtual.visibleEnd) {
+      return;
+    }
+    
+    state.virtual.visibleStart = startIndex;
+    state.virtual.visibleEnd = endIndex;
+    
+    // スペーサーの高さ設定
+    const totalHeight = total * itemH;
+    state.virtual.spacerEl.style.height = `${totalHeight}px`;
+    
+    // ビューポートの位置
+    const offsetY = startIndex * itemH;
+    state.virtual.viewportEl.style.transform = `translateY(${offsetY}px)`;
+    
+    // 可視範囲のアイテムを描画
+    const frag = document.createDocumentFragment();
+    for (let i = startIndex; i < endIndex; i++) {
+      frag.appendChild(buildMixItemLi(state.mixItems[i], i));
+    }
+    
+    state.virtual.viewportEl.textContent = '';
+    state.virtual.viewportEl.appendChild(frag);
+  }
+  
+  // -------------------------
+  // Mix レンダリング（仮想化対応）
+  // -------------------------
+  
+  function renderMix() {
+    _renderVer += 1;
+    updateMixToolbarButtons();
+    
+    const total = state.mixItems.length;
+    
+    if (total === 0) {
+      // 空の場合：仮想化を解除して空表示
+      if (state.virtual.enabled) teardownVirtualScroll();
+      if (mixListEl) mixListEl.textContent = '';
+      return;
+    }
+    
+    // しきい値判定
+    if (total > VIRTUAL_THRESHOLD) {
+      // 仮想化モード
+      setupVirtualScroll();
+      renderVirtualRange();
+    } else {
+      // 通常モード（全件描画）
+      if (state.virtual.enabled) teardownVirtualScroll();
+      
+      const listEl = document.getElementById('mix-list');
+      if (!listEl) return;
+      
+      listEl.textContent = '';
       const frag = document.createDocumentFragment();
-      const end = Math.min(total, i + chunkSize);
-      for (; i < end; i++) frag.appendChild(buildMixItemLi(state.mixItems[i], i));
-      mixListEl.appendChild(frag);
-
-      if (i < total) requestAnimationFrame(appendChunk);
-      else updateMixToolbarButtons();
-    };
-
-    if (total > 300) requestAnimationFrame(appendChunk);
-    else appendChunk();
+      for (let i = 0; i < total; i++) {
+        frag.appendChild(buildMixItemLi(state.mixItems[i], i));
+      }
+      listEl.appendChild(frag);
+    }
   }
 
   // -------------------------

@@ -5,15 +5,13 @@
    - 要素が潰れないよう、各パーツに適切な余白と最小高さを設定
    ========================================================= */
 
-*{ box-sizing:border-box; }
-
 html, body {
   /* 全体スクロールを許可 */
   height: auto; 
   min-height: 100%;
   margin: 0;
   overflow-y: auto; 
-  background: #fff;
+  background: var(--c-surface);
 }
 
 body {
@@ -27,52 +25,53 @@ body {
 section {
   /* ページ読み込み時に1/3ずつ見えるように最低高さを設定 */
   min-height: 33.3vh; 
-  padding: 15px 12px;
-  border-bottom: 2px solid #f0f0f0;
+  padding: var(--sp-4) var(--sp-3);
+  border-bottom: 2px solid var(--c-border-light);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-2);
 }
 
 h2 {
-  font-size: 14px;
+  font-size: var(--fs-sm);
   margin: 0;
-  line-height: 1.2;
-  color: #333;
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+  font-weight: 600;
 }
 
 /* -------------------------
    Input Layer（上部）
    ------------------------- */
 #layer-in {
-  background: #fafafa;
+  background: var(--c-surface-2);
 }
 
 .mode-select {
   display: flex;
-  gap: 15px;
+  gap: var(--sp-4);
   flex-wrap: wrap;
   align-items: center;
 }
 
 .mode-select label {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   cursor: pointer;
   white-space: nowrap;
 }
 
 #mode3-options {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   line-height: 1.5;
-  background: #f0f0f0;
-  padding: 8px;
-  border-radius: 4px;
+  background: var(--c-border-light);
+  padding: var(--sp-2);
+  border-radius: var(--r-sm);
 }
 
 #mode3-options br { display: none; }
 #mode3-options label {
   display: inline-block;
-  margin-right: 12px;
+  margin-right: var(--sp-3);
 }
 
 /* 入力群：中身に応じて高さが伸びる */
@@ -83,46 +82,45 @@ h2 {
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 .input-row {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-2);
   align-items: center;
 }
 
 .input-row input[type="text"] {
   flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: var(--sp-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  background: var(--c-surface);
+}
+
+.input-row input[type="text"]:focus {
+  border-color: var(--c-primary);
 }
 
 .input-row input[type="number"] {
   width: 70px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: var(--sp-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
 }
 
-#btn-generate.btn-gen {
-  width: 100%;
-  padding: 10px;
-  background: #4a90e2;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
+.input-row input[type="number"]:focus {
+  border-color: var(--c-primary);
 }
 
 /* -------------------------
    Mix Layer（中央）
    ------------------------- */
 #layer-mix {
-  background: #fff;
+  background: var(--c-surface);
 }
 
 .mix-header {
@@ -130,87 +128,152 @@ h2 {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--sp-2);
 }
 
 .mix-toolbar {
   display: flex;
-  gap: 5px;
+  gap: var(--sp-1);
 }
 
 .mix-help {
-  font-size: 11px;
-  color: #666;
+  font-size: var(--fs-xxs);
+  color: var(--c-text-muted);
 }
 
-/* リスト：内部スクロールさせず、全件表示 */
+/* -------------------------
+   Mix仮想スクロール構造
+   ------------------------- */
+
+/* スクロールコンテナ（200件超で表示） */
+.mix-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: min(52vh, 520px);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+}
+
+/* スペーサー（総高さを確保） */
+.mix-spacer {
+  position: relative;
+  width: 100%;
+}
+
+/* ビューポート（可視範囲だけ描画） */
+.mix-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
+}
+
+/* 従来のリスト（200件以下） */
 .mix-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  border: 1px solid #eee;
-  border-radius: 4px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+}
+
+/* 仮想化時のリスト */
+.mix-list.virtualized {
+  border: none;
+  border-radius: 0;
 }
 
 .mix-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-bottom: 1px solid #eee;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-bottom: 1px solid var(--c-border-light);
   font-family: monospace;
-  font-size: 12px;
+  font-size: var(--fs-xs);
+  background: var(--c-surface);
+}
+
+.mix-item:last-child {
+  border-bottom: none;
+}
+
+.mix-item.dragging {
+  opacity: 0.5;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--c-text-muted);
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.mix-select {
+  cursor: pointer;
+}
+
+.mix-text {
+  flex: 1;
+  cursor: pointer;
+  color: var(--c-text);
+}
+
+.mix-text:hover {
+  color: var(--c-primary);
+}
+
+.mix-actions {
+  display: flex;
+  gap: var(--sp-1);
 }
 
 /* -------------------------
    Output Layer（下部）
    ------------------------- */
 #layer-out {
-  background: #f4f5f7;
+  background: var(--c-surface-2);
   border-bottom: none;
-  padding-bottom: 30px; /* 下部に少し余裕を持たせる */
+  padding-bottom: var(--sp-6);
 }
 
 .output-controls {
   display: flex;
-  gap: 8px;
-}
-
-.output-controls button {
-  padding: 8px;
-  flex: 1;
-  cursor: pointer;
+  gap: var(--sp-2);
 }
 
 /* テキストエリア：高さを固定せず、中身が見やすいサイズを確保 */
 #final-output {
   width: 100%;
-  min-height: 120px; /* 最低限の入力エリアを確保 */
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  min-height: 120px;
+  padding: var(--sp-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
   font-family: monospace;
-  font-size: 13px;
-  resize: vertical; /* ユーザーが手動で広げることは可能にする */
+  font-size: var(--fs-sm);
+  resize: vertical;
+  background: var(--c-surface);
+  box-shadow: var(--shadow-inset);
+}
+
+#final-output:focus {
+  border-color: var(--c-primary);
 }
 
 .output-footer {
   text-align: right;
 }
 
-.btn-copy {
-  background: #27ae60;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 /* Toast (画面右下に固定) */
 #toast-container {
   position: fixed;
-  right: 15px;
-  bottom: 15px;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
   z-index: 10000;
 }

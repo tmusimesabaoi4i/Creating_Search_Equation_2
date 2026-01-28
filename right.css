@@ -1,0 +1,42 @@
+/* =========================================================
+   right.css - メモ画面
+   ========================================================= */
+
+body {
+    padding: var(--sp-2);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--sp-2);
+    font-weight: 600;
+    color: var(--c-text-muted);
+}
+
+#notepad {
+    flex-grow: 1;
+    width: 100%;
+    resize: none;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-sm);
+    padding: var(--sp-2);
+    outline: none;
+    line-height: var(--lh-base);
+    background: var(--c-surface);
+    box-shadow: var(--shadow-inset);
+}
+
+#notepad:focus {
+    border-color: var(--c-primary);
+}
+
+.status {
+    font-size: var(--fs-tiny);
+    color: var(--c-text-lighter);
+}
+

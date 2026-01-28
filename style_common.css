@@ -1,34 +1,245 @@
-/* style_common.css */
+/* style_common.css - トークン適用版 */
+@import url('tokens.css');
+
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-    background-color: #f4f5f7;
-    color: #333;
-    /* 全体的に少し大きく見せる */
-    font-size: 15px; 
+    background-color: var(--c-bg);
+    color: var(--c-text);
+    font-size: var(--fs-base);
+    line-height: var(--lh-base);
 }
 
 textarea, input, select, button {
     font-family: inherit;
-    font-size: 15px; /* 入力文字を大きく */
+    font-size: var(--fs-base);
 }
 
+/* -------------------------
+   Button Reset（見た目はクラスで付ける）
+   ------------------------- */
 button {
-    cursor: pointer;
-    transition: all 0.2s;
+    margin: 0;
+    padding: 0;
     border: none;
-    border-radius: 6px;
-    padding: 8px 14px; /* ボタンを押しやすく */
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition: var(--transition-base);
 }
 
-button:active {
-    transform: translateY(1px);
-    filter: brightness(0.9);
-}
-
+/* -------------------------
+   Scrollbar
+   ------------------------- */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #aaa; }
+::-webkit-scrollbar-track { background: var(--c-surface-2); }
+::-webkit-scrollbar-thumb { background: #cccccc; border-radius: var(--r-sm); }
+::-webkit-scrollbar-thumb:hover { background: #aaaaaa; }
+
+/* -------------------------
+   Focus Styles（統一）
+   ------------------------- */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+/* -------------------------
+   Button Classes（Primary/Secondary/Danger/Ghost）
+   ------------------------- */
+
+/* 共通ベース */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--btn-h-md);
+    padding: 0 var(--sp-3);
+    border: 1px solid transparent;
+    border-radius: var(--r-md);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: var(--transition-base);
+    user-select: none;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+/* Primary（主動線：青ボタン） */
+.btn--primary {
+    background: var(--c-primary);
+    color: var(--c-primary-text);
+    border-color: var(--c-primary);
+}
+
+.btn--primary:hover:not(:disabled) {
+    background: var(--c-primary-hover);
+    border-color: var(--c-primary-hover);
+}
+
+.btn--primary:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+/* Secondary（補助動線：白地に青枠） */
+.btn--secondary {
+    background: var(--c-surface);
+    color: var(--c-primary);
+    border-color: var(--c-border);
+}
+
+.btn--secondary:hover:not(:disabled) {
+    background: var(--c-primary-soft);
+    border-color: var(--c-primary);
+}
+
+.btn--secondary:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+/* Danger（破壊的操作：薄赤背景） */
+.btn--danger {
+    background: var(--c-danger-bg);
+    color: var(--c-danger-text);
+    border-color: var(--c-danger-bg);
+}
+
+.btn--danger:hover:not(:disabled) {
+    background: #ffcdd2;
+    color: #b71c1c;
+}
+
+.btn--danger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+}
+
+/* Ghost（背景なし・枠なし） */
+.btn--ghost {
+    background: transparent;
+    color: var(--c-text-muted);
+    border-color: transparent;
+}
+
+.btn--ghost:hover:not(:disabled) {
+    background: var(--c-surface-2);
+    color: var(--c-text);
+}
+
+/* サイズバリエーション */
+.btn--sm {
+    height: var(--btn-h-sm);
+    padding: 0 var(--sp-2);
+    font-size: var(--fs-sm);
+}
+
+.btn--lg {
+    height: var(--btn-h-lg);
+    padding: 0 var(--sp-4);
+    font-size: var(--fs-base);
+}
+
+.btn--block {
+    width: 100%;
+}
+
+/* -------------------------
+   Toast通知（左画面用）
+   ------------------------- */
+.toast {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 260px;
+    padding: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-2);
+    background: var(--c-surface);
+    border-left: 4px solid var(--c-primary);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md);
+    font-size: var(--fs-sm);
+    animation: slideIn 0.2s ease;
+}
+
+.toast.out {
+    animation: slideOut 0.18s ease forwards;
+}
+
+.toast-msg {
+    flex: 1;
+}
+
+.toast-close {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: var(--r-sm);
+    font-size: 18px;
+    line-height: 1;
+    color: var(--c-text-muted);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.toast-close:hover {
+    background: var(--c-surface-2);
+    color: var(--c-text);
+}
+
+.toast.success {
+    border-left-color: var(--c-success);
+}
+
+.toast.warn {
+    border-left-color: var(--c-warn);
+}
+
+.toast.error {
+    border-left-color: var(--c-danger);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(20px) scale(0.95);
+    }
+}

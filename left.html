@@ -28,17 +28,17 @@
 
     <div id="input-container" class="input-group"></div>
 
-    <button id="btn-generate" class="btn-gen" type="button">生成 (↓)</button>
+    <button id="btn-generate" class="btn btn--primary btn--block" type="button">生成 (↓)</button>
   </section>
 
   <section id="layer-mix">
     <div class="mix-header">
       <h2>Mix Layer</h2>
       <div class="mix-toolbar">
-        <button id="btn-toggle-all" type="button" class="btn-sm" title="全てを選択/解除">全ON</button>
-        <button id="btn-sort-length" type="button" class="btn-sm" title="長さ順に並び替え">長さSort</button>
-        <button id="btn-edit-selected" type="button" class="btn-sm" title="選択中の1件をInputへ展開">Edit selected</button>
-        <button id="btn-clear-mix" type="button" class="btn-sm" title="Mixを全削除">Clear</button>
+        <button id="btn-toggle-all" type="button" class="btn btn--sm btn--ghost" title="全てを選択/解除">全ON</button>
+        <button id="btn-sort-length" type="button" class="btn btn--sm btn--ghost" title="長さ順に並び替え">長さSort</button>
+        <button id="btn-edit-selected" type="button" class="btn btn--sm btn--ghost" title="選択中の1件をInputへ展開">Edit selected</button>
+        <button id="btn-clear-mix" type="button" class="btn btn--sm btn--danger" title="Mixを全削除">Clear</button>
       </div>
     </div>
 
@@ -53,14 +53,14 @@
     <h2>Output Layer</h2>
 
     <div class="output-controls">
-      <button id="btn-create-final" type="button" style="flex:1;">Mixから式作成 (↓)</button>
-      <button id="btn-decompose-mix" class="btn-reverse" type="button" title="式からMixへ分解">逆変換 (↑)</button>
+      <button id="btn-create-final" class="btn btn--primary" type="button" style="flex:1;">Mixから式作成 (↓)</button>
+      <button id="btn-decompose-mix" class="btn btn--secondary" type="button" title="式からMixへ分解">逆変換 (↑)</button>
     </div>
 
     <textarea id="final-output" placeholder="最終的な式... またはここに入力して逆変換"></textarea>
 
     <div class="output-footer">
-      <button id="btn-copy" class="btn-copy" type="button">Copy</button>
+      <button id="btn-copy" class="btn btn--secondary" type="button">Copy</button>
     </div>
   </section>
 
