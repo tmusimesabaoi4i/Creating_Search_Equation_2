@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <title>Business Tool Main</title>
     <style>
-        body, html { height: 100%; margin: 0; overflow: hidden; }
+        body, html { height: 100%; margin: 0; overflow: hidden; background: #ddd; }
         .container {
             display: flex;
             height: 100vh;
             width: 100vw;
+            gap: 2px; /* パネル間の境界を分かりやすく */
         }
         .frame-wrapper {
             height: 100%;
-            border-right: 1px solid #ddd;
+            background: #fff;
         }
         iframe {
             width: 100%;
@@ -21,10 +22,10 @@
             display: block;
         }
         
-        /* Layout Sizing */
-        #wrapper-left { width: 30%; min-width: 320px; background: #fff; }
-        #wrapper-center { width: 40%; flex-grow: 1; }
-        #wrapper-right { width: 30%; min-width: 320px; background: #fff; }
+        /* 比率とサイズ感の調整 */
+        #wrapper-left { width: 40%; min-width: 350px; } 
+        #wrapper-center { flex: 1; min-width: 400px; }
+        #wrapper-right { width: 25%; min-width: 300px; }
     </style>
 </head>
 <body>
@@ -32,11 +33,9 @@
         <div id="wrapper-left" class="frame-wrapper">
             <iframe src="left.html" name="leftFrame"></iframe>
         </div>
-
         <div id="wrapper-center" class="frame-wrapper">
             <iframe src="center.html" name="centerFrame"></iframe>
         </div>
-
         <div id="wrapper-right" class="frame-wrapper">
             <iframe src="right.html" name="rightFrame"></iframe>
         </div>

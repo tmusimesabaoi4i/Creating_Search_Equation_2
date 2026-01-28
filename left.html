@@ -21,9 +21,10 @@
     </div>
 
     <div id="mode3-options" class="sub-mode-toggle" style="display:none;">
-      <label><input type="radio" name="mode3type" value="A" checked /> A: 直列 (A,n,B,n,C)</label><br />
-      <label><input type="radio" name="mode3type" value="B" /> B: 集合 ({A,B,C},n)</label>
-    </div>
+  <label><input type="radio" name="mode3type" value="A" checked /> A: 直列 {A,n,B,n,C}/TX</label><br />
+  <label><input type="radio" name="mode3type" value="B" /> B: 集合 {A,B,C},n/TX</label><br />
+  <label><input type="radio" name="mode3type" value="C" /> C: 並列 [A/TX + B,n,C/TX]</label>
+</div>
 
     <div id="input-container" class="input-group"></div>
 
@@ -34,12 +35,16 @@
     <div class="mix-header">
       <h2>Mix Layer</h2>
       <div class="mix-toolbar">
+        <button id="btn-toggle-all" type="button" class="btn-sm" title="全てを選択/解除">全ON</button>
+        <button id="btn-sort-length" type="button" class="btn-sm" title="長さ順に並び替え">長さSort</button>
         <button id="btn-edit-selected" type="button" class="btn-sm" title="選択中の1件をInputへ展開">Edit selected</button>
         <button id="btn-clear-mix" type="button" class="btn-sm" title="Mixを全削除">Clear</button>
       </div>
     </div>
 
-    <div class="mix-help">選択した式を「*」で連結します（ドラッグで並び替え可）</div>
+    <div class="mix-help">
+      選択した式を「*」で連結します（ドラッグで並び替え可 / 重複式は追加されません）
+    </div>
 
     <ul id="mix-list" class="mix-list"></ul>
   </section>
