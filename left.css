@@ -60,6 +60,26 @@ h2 {
   white-space: nowrap;
 }
 
+.num-suffix {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: var(--fs-xs);
+  color: var(--c-text);
+  margin-top: calc(var(--sp-1) * -1);
+}
+
+.num-suffix__label {
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.num-suffix label {
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 #mode3-options {
   font-size: var(--fs-xs);
   line-height: 1.5;

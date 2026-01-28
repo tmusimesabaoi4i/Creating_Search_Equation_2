@@ -19,6 +19,7 @@
   const state = {
     mode: '1',
     mode3Type: 'A',
+    numSuffix: 'N', // 数値の隣に付ける英字（N or C）
     sortLenDesc: true, // true: 長い→短い, false: 短い→長い
     mixItems: [], // { id, text, selected }
     
@@ -44,6 +45,7 @@
   const modeRadios = Array.from(document.getElementsByName('mode'));
   const mode3Options = document.getElementById('mode3-options');
   const mode3Radios = Array.from(document.getElementsByName('mode3type'));
+  const numSuffixRadios = Array.from(document.getElementsByName('numSuffix'));
 
   const mixListEl = document.getElementById('mix-list');
   const finalOutput = document.getElementById('final-output');
@@ -373,8 +375,9 @@
             <div class="mode3-bracket mode3-bracket--open">{</div>
             <div class="mode3-body">
               <div class="input-row"><label class="mode3-label">A</label>${createWordInput('単語A')}</div>
-              <div class="input-row"><label class="mode3-label">n</label>${createNumInput('n', DEFAULT_N.mode3A)}</div>
+              <div class="input-row"><label class="mode3-label">n1</label>${createNumInput('n1', DEFAULT_N.mode3A)}</div>
               <div class="input-row"><label class="mode3-label">B</label>${createWordInput('単語B')}</div>
+              <div class="input-row"><label class="mode3-label">n2</label>${createNumInput('n2', DEFAULT_N.mode3A)}</div>
               <div class="input-row"><label class="mode3-label">C</label>${createWordInput('単語C')}</div>
             </div>
             <div class="mode3-bracket mode3-bracket--close">}/TX</div>
@@ -455,23 +458,27 @@
     const words = rawWords.map(normalizeWordForMix);
     let result = '';
 
-    // 数値の後ろに "N" を付加するヘルパー
-    const formatN = (val) => (val || '1') + 'N';
+    // 数値の後ろに "N" または "C" を付加するヘルパー
+    const suffix = (state.numSuffix === 'C') ? 'C' : 'N';
+    const formatNum = (val) => (val || '1') + suffix;
 
     if (state.mode === '1') {
       result = `${words[0]}/TX`;
     } else if (state.mode === '2') {
       // 例: word,30N,word/TX
-      result = `${words[0]},${formatN(nums[0])},${words[1]}/TX`;
+      result = `${words[0]},${formatNum(nums[0])},${words[1]}/TX`;
     } else if (state.mode === '3') {
-      const nStr = formatN(nums[0]);
       if (state.mode3Type === 'A') {
-        // 例: {A,30N,B,30N,C}/TX
-        result = `{${words[0]},${nStr},${words[1]},${nStr},${words[2]}}/TX`;
+        const nStr1 = formatNum(nums[0]);
+        const nStr2 = formatNum(nums[1] ?? nums[0]);
+        // 例: {A,30N,B,10N,C}/TX
+        result = `{${words[0]},${nStr1},${words[1]},${nStr2},${words[2]}}/TX`;
       } else if (state.mode3Type === 'B') {
+        const nStr = formatNum(nums[0]);
         // 例: {A,B,C},30N/TX
         result = `{${words[0]},${words[1]},${words[2]}},${nStr}/TX`;
       } else {
+        const nStr = formatNum(nums[0]);
         // 例: [A/TX+B,30N,C/TX]
         result = `[${words[0]}/TX+${words[1]},${nStr},${words[2]}/TX]`;
       }
@@ -919,14 +926,18 @@
       return str;
     };
 
-    // "30N" から "30" を取り出す (大文字小文字許容)
+    // "30N" / "30C" から "30" を取り出す (大文字小文字許容)
     const extractNum = (s) => {
-      const m = s.trim().match(/^(\d+)[nN]$/);
+      const m = s.trim().match(/^(\d+)[nNcC]$/);
       return m ? m[1] : s.trim();
     };
+    const extractSuffix = (s) => {
+      const m = s.trim().match(/^\d+([nNcC])$/);
+      return m ? String(m[1]).toUpperCase() : null;
+    };
 
-    // 数値部分が "数字+N" か判定する
-    const isNFormat = (s) => /^(\d+)[nN]$/.test(s.trim());
+    // 数値部分が "数字+N/C" か判定する
+    const isNumFormat = (s) => /^(\d+)[nNcC]$/.test(s.trim());
 
     // 3-C: [A/TX + B,nN,C/TX]
     if (raw.startsWith('[') && raw.endsWith(']')) {
@@ -940,8 +951,9 @@
           const rightCore = stripTxSuffix(right);
           const parts = splitTopLevel(rightCore, ',').map((s) => s.trim());
           
-          if (parts.length === 3 && isNFormat(parts[1])) {
+          if (parts.length === 3 && isNumFormat(parts[1])) {
             setMode('3', 'C');
+            setNumSuffix(extractSuffix(parts[1]) ?? 'N');
             queueMicrotask(() => fillInputs([wordA, stripParentheses(parts[0]), stripParentheses(parts[2])], [extractNum(parts[1])]));
             return;
           }
@@ -974,11 +986,12 @@
         const after = core.slice(closeIdx + 1).trim();
         if (after.startsWith(',')) {
           const nPart = after.slice(1).trim();
-          if (isNFormat(nPart)) {
+          if (isNumFormat(nPart)) {
             const inner = core.slice(1, closeIdx).trim();
             const items = splitTopLevel(inner, ',').map((s) => stripParentheses(s.trim())).filter(Boolean);
             if (items.length === 3) {
               setMode('3', 'B');
+              setNumSuffix(extractSuffix(nPart) ?? 'N');
               queueMicrotask(() => fillInputs([items[0], items[1], items[2]], [extractNum(nPart)]));
               return;
             }
@@ -991,9 +1004,13 @@
     if (core.startsWith('{') && core.endsWith('}')) {
       const inner = core.slice(1, -1).trim();
       const parts = splitTopLevel(inner, ',').map((s) => s.trim());
-      if (parts.length === 5 && isNFormat(parts[1]) && isNFormat(parts[3])) {
+      if (parts.length === 5 && isNumFormat(parts[1]) && isNumFormat(parts[3])) {
         setMode('3', 'A');
-        queueMicrotask(() => fillInputs([stripParentheses(parts[0]), stripParentheses(parts[2]), stripParentheses(parts[4])], [extractNum(parts[1])]));
+        setNumSuffix(extractSuffix(parts[1]) ?? extractSuffix(parts[3]) ?? 'N');
+        queueMicrotask(() => fillInputs(
+          [stripParentheses(parts[0]), stripParentheses(parts[2]), stripParentheses(parts[4])],
+          [extractNum(parts[1]), extractNum(parts[3])]
+        ));
         return;
       }
     }
@@ -1003,9 +1020,10 @@
     if (parts.length === 1) {
       setMode('1');
       queueMicrotask(() => fillInputs([stripParentheses(parts[0])], []));
-    } else if (parts.length === 3 && isNFormat(parts[1])) {
+    } else if (parts.length === 3 && isNumFormat(parts[1])) {
       // Mode 2: A,nN,B
       setMode('2');
+      setNumSuffix(extractSuffix(parts[1]) ?? 'N');
       queueMicrotask(() => fillInputs([stripParentheses(parts[0]), stripParentheses(parts[2])], [extractNum(parts[1])]));
     } else {
       showToast(`解析できない形式です: ${formula}`, 'error', 2600);
@@ -1023,6 +1041,13 @@
       if (sub) sub.checked = true;
     }
     renderInputs();
+  }
+
+  function setNumSuffix(s) {
+    const v = (String(s ?? '').toUpperCase() === 'C') ? 'C' : 'N';
+    state.numSuffix = v;
+    const r = document.querySelector(`input[name="numSuffix"][value="${v}"]`);
+    if (r) r.checked = true;
   }
 
   function fillInputs(wordArr, numArr) {
@@ -1127,6 +1152,12 @@
     mode3Radios.forEach((r) => r.addEventListener('change', (e) => {
       state.mode3Type = e.target.value;
       renderInputs();
+    }));
+
+    // 数値サフィックス（N/C）
+    setNumSuffix(document.querySelector('input[name="numSuffix"]:checked')?.value ?? 'N');
+    numSuffixRadios.forEach((r) => r.addEventListener('change', (e) => {
+      setNumSuffix(e.target.value);
     }));
 
     btnGenerate?.addEventListener('click', generateFormula);
