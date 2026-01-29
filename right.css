@@ -15,7 +15,7 @@ header {
     align-items: center;
     margin-bottom: var(--sp-2);
     font-weight: 600;
-    color: var(--c-text-muted);
+    color: var(--c-text);
 }
 
 #notepad {
@@ -37,6 +37,6 @@ header {
 
 .status {
     font-size: var(--fs-tiny);
-    color: var(--c-text-lighter);
+    color: var(--c-text);
 }
 

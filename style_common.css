@@ -1,8 +1,10 @@
-/* style_common.css - トークン適用版 */
+/* style_common.css - Modern Business UI */
 @import url('tokens.css');
 
-* {
-    box-sizing: border-box;
+* { box-sizing: border-box; }
+
+html {
+    height: 100%;
 }
 
 body {
@@ -13,11 +15,28 @@ body {
     color: var(--c-text);
     font-size: var(--fs-base);
     line-height: var(--lh-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 textarea, input, select, button {
     font-family: inherit;
     font-size: var(--fs-base);
+}
+
+/* Selection */
+::selection {
+    background: var(--c-primary-soft);
+}
+
+/* Links */
+a {
+    color: var(--c-primary);
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
 }
 
 /* -------------------------
@@ -35,28 +54,56 @@ button {
 }
 
 /* -------------------------
-   Scrollbar
+   Modern Form Controls（共通）
    ------------------------- */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--c-surface-2); }
-::-webkit-scrollbar-thumb { background: #cccccc; border-radius: var(--r-sm); }
-::-webkit-scrollbar-thumb:hover { background: #aaaaaa; }
+:where(input, textarea, select) {
+    background: var(--c-surface);
+    color: var(--c-text);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    padding: calc(var(--sp-2) - 1px) var(--sp-2);
+    transition: var(--transition-base);
+    box-shadow: none;
+}
 
-/* -------------------------
-   Focus Styles（統一）
-   ------------------------- */
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
+:where(input, textarea, select)::placeholder {
+    color: var(--c-text-lighter);
+}
+
+:where(input, textarea, select):hover {
+    border-color: var(--c-border);
+}
+
+:where(input, textarea, select):focus-visible {
     outline: none;
+    border-color: var(--c-primary);
     box-shadow: var(--focus-ring);
 }
+
+/* checkbox/radio accent */
+input[type="checkbox"], input[type="radio"] {
+    accent-color: var(--c-primary);
+}
+
+/* number spinner off (optional) */
+/* input[type="number"] { -moz-appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+} */
+
+/* -------------------------
+   Scrollbar
+   ------------------------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--c-surface-2); }
+::-webkit-scrollbar-thumb { background: rgba(120,120,120,0.35); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(120,120,120,0.55); }
 
 /* -------------------------
    Button Classes（Primary/Secondary/Danger/Ghost）
    ------------------------- */
-
-/* 共通ベース */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -73,96 +120,104 @@ select:focus-visible {
     cursor: pointer;
     transition: var(--transition-base);
     user-select: none;
+    box-shadow: var(--shadow-sm);
 }
 
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
+    box-shadow: none;
 }
 
 .btn:active:not(:disabled) {
     transform: translateY(1px);
 }
 
-/* Primary（主動線：青ボタン） */
 .btn--primary {
     background: var(--c-primary);
     color: var(--c-primary-text);
     border-color: var(--c-primary);
 }
-
 .btn--primary:hover:not(:disabled) {
     background: var(--c-primary-hover);
     border-color: var(--c-primary-hover);
 }
-
 .btn--primary:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
 }
 
-/* Secondary（補助動線：白地に青枠） */
 .btn--secondary {
     background: var(--c-surface);
-    color: var(--c-primary);
+    color: var(--c-text);
     border-color: var(--c-border);
 }
-
 .btn--secondary:hover:not(:disabled) {
-    background: var(--c-primary-soft);
-    border-color: var(--c-primary);
+    background: var(--c-surface-2);
+    border-color: var(--c-border);
 }
-
 .btn--secondary:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
 }
 
-/* Danger（破壊的操作：薄赤背景） */
 .btn--danger {
     background: var(--c-danger-bg);
     color: var(--c-danger-text);
     border-color: var(--c-danger-bg);
 }
-
 .btn--danger:hover:not(:disabled) {
-    background: #ffcdd2;
-    color: #b71c1c;
+    filter: brightness(0.98);
 }
-
 .btn--danger:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
 }
 
-/* Ghost（背景なし・枠なし） */
 .btn--ghost {
     background: transparent;
     color: var(--c-text-muted);
     border-color: transparent;
+    box-shadow: none;
 }
-
 .btn--ghost:hover:not(:disabled) {
     background: var(--c-surface-2);
     color: var(--c-text);
 }
 
-/* サイズバリエーション */
 .btn--sm {
     height: var(--btn-h-sm);
     padding: 0 var(--sp-2);
     font-size: var(--fs-sm);
+    border-radius: var(--r-sm);
 }
-
 .btn--lg {
     height: var(--btn-h-lg);
     padding: 0 var(--sp-4);
     font-size: var(--fs-base);
 }
+.btn--block { width: 100%; }
 
-.btn--block {
-    width: 100%;
+/* icon-like small button (使ってなくてもOK) */
+.icon-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: var(--r-sm);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--c-text-muted);
+    transition: var(--transition-base);
+}
+.icon-btn:hover {
+    background: var(--c-surface-2);
+    color: var(--c-text);
+}
+.icon-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
 }
 
 /* -------------------------
@@ -176,6 +231,7 @@ select:focus-visible {
     padding: var(--sp-3) var(--sp-4);
     margin-bottom: var(--sp-2);
     background: var(--c-surface);
+    border: 1px solid var(--c-border);
     border-left: 4px solid var(--c-primary);
     border-radius: var(--r-md);
     box-shadow: var(--shadow-md);
@@ -187,16 +243,14 @@ select:focus-visible {
     animation: slideOut 0.18s ease forwards;
 }
 
-.toast-msg {
-    flex: 1;
-}
+.toast-msg { flex: 1; }
 
 .toast-close {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     padding: 0;
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     border-radius: var(--r-sm);
     font-size: 18px;
     line-height: 1;
@@ -204,42 +258,24 @@ select:focus-visible {
     cursor: pointer;
     transition: var(--transition-fast);
 }
-
 .toast-close:hover {
     background: var(--c-surface-2);
     color: var(--c-text);
 }
-
-.toast.success {
-    border-left-color: var(--c-success);
-}
-
-.toast.warn {
-    border-left-color: var(--c-warn);
-}
-
-.toast.error {
-    border-left-color: var(--c-danger);
-}
+.toast.success { border-left-color: var(--c-success); }
+.toast.warn { border-left-color: var(--c-warn); }
+.toast.error { border-left-color: var(--c-danger); }
 
 @keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOut {
+    from { opacity: 1; transform: translateX(0) scale(1); }
+    to   { opacity: 0; transform: translateX(16px) scale(0.98); }
 }
 
-@keyframes slideOut {
-    from {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(20px) scale(0.95);
-    }
+/* Motion reduce */
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
 }

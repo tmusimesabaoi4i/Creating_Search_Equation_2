@@ -352,9 +352,9 @@
 
     const DEFAULT_N = {
       mode2: '30',
-      mode3A: '30',
+      mode3A: '15',
       mode3B: '30',
-      mode3C: '5',
+      mode3C: '3',
     };
 
     let html = '';
